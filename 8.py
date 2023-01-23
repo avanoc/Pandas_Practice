@@ -2,14 +2,6 @@
 Los ficheros emisiones-2016.csv, emisiones-2017.csv, emisiones-2018.csv y emisiones-2019.csv, 
 contienen datos sobre las emisiones contaminates en la ciudad de Madrid en los años 
 2016, 2017, 2018 y 2019 respectivamente. Escribir un programa con los siguientes requisitos:
-
-8. Mostrar un resumen descriptivo (mínimo, máximo, media, etc.) para cada contaminante.
-9. Mostrar un resumen descriptivo para cada contaminante por distritos.
-10. Crear una función que reciba una estación y un contaminante 
-y devuelva un resumen descriptivo de las emisiones del contaminante indicado en la estación indicada.
-11. Crear una función que devuelva las emisiones medias mensuales de un contaminante y un año dados para todos las estaciones.
-12. Crear un función que reciba una estación de medición y devuelva un DataFrame 
-con las medias mensuales de los distintos tipos de contaminantes.
 '''
 
 import pandas as pd
@@ -29,6 +21,7 @@ emisiones.drop(columns=droplist, inplace=True)
 
 # Reestructurar el DataFrame para que los valores de los contaminantes de las columnas de los días aparezcan en una única columna.
 emisiones = emisiones.melt(id_vars=['ESTACION', 'MAGNITUD', 'ANO', 'MES'], var_name='DIA', value_name='VALOR')
+emisiones['VALOR'] = emisiones.VALOR.astype(float)
 
 # Añadir una columna con la fecha a partir de la concatenación del año, el mes y el día (usar el módulo datetime).
 emisiones['FECHA'] = emisiones.ANO.apply(str) + '/' + emisiones.MES.apply(str) + '/' + emisiones.DIA.str.strip('D').apply(str)
@@ -49,5 +42,48 @@ print(f'Estaciones: {estaciones}\nMagnitud: {magnitud}')
 def serie_emisiones(estacion, contaminante, fechas):
     return emisiones.loc[(emisiones['ESTACION'] == estacion) & (emisiones['MAGNITUD'] == contaminante) & (emisiones['FECHA'] == fechas)]
 
-serie_emi = serie_emisiones('4', '1', '2016-01-01')
+serie_emi = serie_emisiones(4, 1, '2016-01-01')
 print(serie_emi)
+
+# Mostrar un resumen descriptivo (mínimo, máximo, media, etc.) para cada contaminante.
+for m in magnitud:
+    print(f'Resumen descriptivo del contaminante: {m}:')
+    print(emisiones.loc[emisiones['MAGNITUD'] == m].VALOR.describe())
+
+# Mostrar un resumen descriptivo para cada contaminante por distritos (ESTACIONES).
+for m in magnitud:
+    for e in estaciones:
+        if not emisiones.loc[(emisiones['MAGNITUD'] == m) & (emisiones['ESTACION'] == e)].empty:
+            print(f'Resumen descriptivo del contaminante {m} en la estación {e}:')
+            print(emisiones.loc[(emisiones['MAGNITUD'] == m) & (emisiones['ESTACION'] == e)].VALOR.describe())
+
+# Crear una función que reciba una estación y un contaminante y devuelva un resumen descriptivo 
+# de las emisiones del contaminante indicado en la estación indicada.
+def resumen(e, m):
+    return emisiones.loc[(emisiones['MAGNITUD'] == m) & (emisiones['ESTACION'] == e)].VALOR.describe()
+
+print(resumen(55, 44))
+
+# Crear una función que devuelva las emisiones medias mensuales de un contaminante y un año dados para todos las estaciones.
+def media_mensual(m, a):
+    filtrado = emisiones[(emisiones['MAGNITUD'] == m) & (emisiones['ANO'] == a)]
+    mensual = {}
+    for m in range(1, 13):
+        mensual[m] = filtrado[filtrado['MES'] == m].VALOR.mean()
+    return mensual
+
+print(media_mensual(1, 2016))
+
+# Crear un función que reciba una estación de medición y devuelva un DataFrame 
+# con las medias mensuales de los distintos tipos de contaminantes.
+def media_mensual_estacion(e):
+    filtrado = emisiones[emisiones['ESTACION'] == e]
+    contaminante = {}
+    for m in magnitud:
+        mensual = {}
+        for mes in range(1, 13):
+            mensual[mes] = filtrado[filtrado['MES'] == mes].VALOR.mean()
+        contaminante[m] = mensual
+    return pd.DataFrame(contaminante)
+
+print(media_mensual_estacion(4))
