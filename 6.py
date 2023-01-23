@@ -15,9 +15,11 @@ y devuelva otro DataFrame con el mínimo, el máximo y la media de dada columna.
 import pandas as pd
 
 def crear_df(csv):
-    mi_df = pd.read_csv(csv)
-    nuevo_df = mi_df.drop(columns=['Nombre'])
-    return nuevo_df
+    mi_df = pd.read_csv(csv, sep=';', decimal=',')
+    mi_df.drop(columns=['Nombre', 'Final', 'Volumen', 'Efectivo'], inplace=True)
+    mi_df['Media'] = mi_df.mean(axis=1)
+    return mi_df
 
 cotizacion = 'https://aprendeconalf.es/docencia/python/ejercicios/soluciones/pandas/cotizacion.csv'
-print(crear_df(cotizacion))
+nuevo_df = crear_df(cotizacion)
+print(nuevo_df.head())
